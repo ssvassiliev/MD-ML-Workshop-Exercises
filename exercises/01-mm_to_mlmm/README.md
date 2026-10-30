@@ -30,11 +30,12 @@ Keep this in mind when interpreting the results: the peptide is described by a m
 ## Tasks
 
 ### 1. Understand the existing MM simulation
-- Examine the OpenMM input script.
+- Examine the OpenMM input script `openmm_input_MM.py`.
 - Identify where the force field is loaded and the OpenMM system is created.
-- Run a short MM-only simulation.
+- Run a short MM-only simulation using submission script `submit_MM.sh`.
 
 ### 2. Introduce the ML potential
+- Create `openmm_input_ANI2X.py` and `submit_ANI2X.sh` by adapting the `openmm_input_MM.py` and `submit_MM.sh` templates.
 - Load the ANI-2x potential using OpenMM-ML.
 - Select the atoms belonging to the polyalanine peptide.
 - Use `createMixedSystem()` to assign ANI-2x to the peptide while retaining MM for the solvent.
@@ -45,7 +46,6 @@ Keep this in mind when interpreting the results: the peptide is described by a m
 - Check that the simulation completes and produces reasonable output.
 
 ### 4. Verify and benchmark the hybrid simulation
-
 - Confirm that the simulation completes successfully.
 - Check the energy and temperature output for obvious anomalies.
 - Compare the computational performance of MM-only and ML/MM simulations.
