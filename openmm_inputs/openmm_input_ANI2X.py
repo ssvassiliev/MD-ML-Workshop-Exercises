@@ -14,7 +14,9 @@ timestep = 1.0 * unit.femtoseconds
 temperature = 310 * unit.kelvin
 pressure = 1 * unit.atmosphere
 
-# Create base MM system
+# Create the base MM system
+# This establishes the original force field for the entire system, including 
+# bonded terms, nonbonded interactions, constraints, and PME settings.
 system = amber_sys.createSystem (
     nonbondedMethod = app.PME,
     ewaldErrorTolerance = 0.0004,
@@ -30,6 +32,8 @@ for atom in amber_sys.topology.atoms():
         ml_atoms.append(atom.index)
 
 # Create a hybrid ML/MM system using the ani2x potential
+# OpenMM-ML uses the existing MM system as its starting point and replaces 
+# the appropriate force contributions for the selected atoms.
 potential = MLPotential('ani2x')
 
 system = potential.createMixedSystem(

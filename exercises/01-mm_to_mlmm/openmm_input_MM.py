@@ -14,7 +14,9 @@ timestep = 1.0 * unit.femtoseconds
 temperature = 310 * unit.kelvin
 pressure = 1 * unit.atmosphere
 
-# Create base MM system
+# Create the base MM system
+# This establishes the original force field for the entire system, including 
+# bonded terms, nonbonded interactions, constraints, and PME settings.
 system = amber_sys.createSystem (
     nonbondedMethod = app.PME,
     ewaldErrorTolerance = 0.0004,
@@ -22,6 +24,31 @@ system = amber_sys.createSystem (
     constraints = app.HBonds,
     removeCMMotion = True
 )
+
+# FIX ME 1: Select atoms belonging to the ML region
+# 1. Create an empty list: ml_atoms = []
+# 2. Loop over atoms in amber_sys.topology.atoms()
+# 3. Check whether each atom's residue name is "ACE", "ALA", or "NME"
+# 4. If it is, append the atom's index (atom.index) to ml_atoms
+# for atom in ???:
+#     if atom.residue.name in ( ??? ):
+#         ml_atoms.append( ??? )
+
+# FIX ME 2: Initialize the ANI-2x ML potential
+# Create an MLPotential object using the model name 'ani2x'
+# potential = ???
+
+# FIX ME 3: Create a hybrid ML/MM system using the ani2x potential
+# Use potential.createMixedSystem() with:
+# - The AMBER topology (amber_sys.topology)
+# - The existing MM system (system)
+# - The list of ML atom indices (ml_atoms)
+# - removeConstraints=False
+# Assign the returned hybrid system to system
+# system = ???
+
+# OpenMM-ML uses the existing MM system as its starting point and replaces 
+# the appropriate force contributions for the selected atoms.
 
 # Configure the Langevin integrator and barostat
 integrator = LangevinMiddleIntegrator(temperature, 1.0 / unit.picoseconds, timestep)
