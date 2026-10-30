@@ -1,0 +1,1 @@
+../../../openmm_inputs/openmm_input_ANI2X.py
