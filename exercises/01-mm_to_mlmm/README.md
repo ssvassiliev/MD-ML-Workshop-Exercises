@@ -27,7 +27,7 @@ An important limitation is that the ML potential does not explicitly account for
 
 Keep this in mind when interpreting the results: the peptide is described by a more sophisticated potential, but its interactions with the surrounding solvent remain classical.
 
-## Tasks
+## Practical work
 
 ### 1. Understand the existing MM simulation
 - Examine the OpenMM input script `openmm_input_MM.py`.

@@ -38,7 +38,8 @@ for atom in amber_sys.topology.atoms():
         ml_atoms.append(atom.index)
 
 # Create a hybrid ML/MM system using the FENNIX potential
-potential = MLPotential('fennix', modelPath=MODELPATH)
+#potential = MLPotential('fennix', modelPath=MODELPATH)
+potential = MLPotential('fennix-bio1-medium')
 
 system = potential.createMixedSystem(
     amber_sys.topology,

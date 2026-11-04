@@ -12,21 +12,22 @@ By the end of this exercise, you should be able to:
 - Understand how model choice and system size affect computational performance.
 - Examine basic MD properties, including potential energy and temperature.
 
-## 1. Set up the models
+## Practical work
+### 1. Set up the models
 You will compare three pretrained ML potentials:
 
 - ANI-2x
 - AIMNet2
 - MACE-OFF24
 
-Create separate OpenMM input files for each model, using your MM-to-ML/MM input file from Exercise 1 as a template.
+Create separate OpenMM input files for AIMNet2 and  MACE-OFF24 models, using your  input file from Exercise 1 as a template. 
 
-Modify the input files to load the corresponding ML potential. Keep the starting structure and simulation settings consistent across all three models.
+Modify the input files to load the corresponding ML potential ('aimnet2' and 'mace-off24-medium'). Keep the starting structure and simulation settings consistent across all three models.
 
+### 2. Run the simulations. 
+#### Systems. 
 
-## 2. Run the simulations
-### Systems
-The test systems are fully solvated polyalanine peptides of different lengths.
+The test systems are fully solvated polyalanine peptides of different lengths. 
 
 | System | ML atoms | Total atoms |
 |---|---:|---:|
@@ -34,31 +35,24 @@ The test systems are fully solvated polyalanine peptides of different lengths.
 | polyAla8 | 96 | 8,069 |
 | polyAla16 | 184 | 17,530 |
 | polyAla32 | 360 | 52,694 |
-| polyAla64 | 712 | 222,607 |
+| polyAla64 | 712 | 222,607 | 
+   
 
-*ML atoms are the atoms evaluated by the ML potential. The total atom count includes the peptide and solvent.*
+#### Simulation parameters
 
-### Simulation parameters
-Run 20 ps of Langevin MD for each model and system size.
+Run 20 ps of Langevin MD for each model and system size. Use the same starting structure and simulation parameters1. Only the ML potential should change between simulations of the same system. 
 
-Use the same:
-- Starting structure.
-- Temperature and integration timestep.
-- Thermostat and barostat settings.
-- Nonbonded treatment and other simulation parameters.
+#### Preparing and running the jobs.
 
-Only the ML potential should change between simulations of the same system.
+During the workshop, you do not need to run every model on every system size. The main goal is to prepare the input files and verify that the simulations run successfully.  
 
-### Preparing and running the jobs
-During the workshop, you do not need to run every model on every system size. The main goal is to prepare the input files and verify that the simulations run successfully.
+1. Create separate OpenMM input files for ANI-2x, AIMNet2, and MACE-OFF24.  
+3. Prepare the corresponding Slurm submission scripts. 
+4. Choose a representative system and submit a short test job for each model. 
+4. Check the output to confirm that the simulations complete successfully and report performance in ns/day. 
 
-1. Create separate OpenMM input files for ANI-2x, AIMNet2, and MACE-OFF24.
-2. Modify the input files to select the appropriate ML potential.
-3. Prepare the corresponding Slurm submission scripts.
-4. Choose a representative system and submit a short test job for each model (or as directed by the instructor).
-5. Check the output to confirm that the simulations complete successfully and report performance in ns/day.
+#### Switching between input structures
 
-### Switching between input structures
 The Python input files expect the AMBER topology and coordinate files to have fixed names:
 
 - `system.parm7`
@@ -82,8 +76,7 @@ ln -sf ../amber_systems/polyala64/system.rst7 system.rst7
 
 The Python input files do not need to be changed.
 
-**Important:** Make sure the symbolic links point to the intended system before submitting a job. Since the input filenames are the same, the simulation will use whichever files the links currently reference.
-
+**Important:** Make sure the symbolic links point to the intended system before submitting a job. Since the input filenames are the same, the simulation will use whichever files the links currently reference.  
 
 ## 3. Investigate GPU performance
 The goal is to understand how different ML potentials use GPU resources and how this relates to actual simulation speed.
@@ -124,7 +117,8 @@ On Nibi, GPU job statistics are available through the [Nibi portal](https://port
 | AIMNet2 | 38% | 2.4 GB | 4.92 ns/day |
 | MACE-OFF24 | 92% | 27.2 GB | 1.77 ns/day |
 
-### Discussion
+### 3. Discussion
+
 Consider the following questions:
 - Which model makes the most effective use of the GPU?
 - Does GPU utilization increase with the number of ML atoms?
