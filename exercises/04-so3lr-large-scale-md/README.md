@@ -1,0 +1,221 @@
+# Exercise 4 — Scaling Up with SO3LR: Full-System ML Molecular Dynamics with JAX-MD
+
+
+In the previous exercises, we explored hybrid ML/MM simulations, in this exercise, we take a different approach: **the entire system is described by an ML potential.**
+
+We will use SO3LR, a machine-learning interatomic potential designed to combine local atomic environments with explicit longer-range physical interactions. Unlike the previous exercises, SO3LR does not run through OpenMM. Instead, it uses JAX-MD, a molecular dynamics engine built on JAX. This exercise demonstrates how we can explore large-scale full-system ML-driven molecular dynamics.
+
+### Goal
+
+ Learn how to use SO3LR with JAX-MD to simulate a larger molecular system.
+
+By the end of this exercise, you should be able to:
+
+- Understand the roles of SO3LR, JAX, and JAX-MD.
+- Prepare an AMBER-generated structure for an SO3LR simulation.
+- Run a short molecular dynamics simulation with JAX-MD..
+- Restart a simulation and convert its trajectory for further analysis.
+
+---
+
+## Introduction: From hybrid ML/MM to full-system ML
+
+In the previous exercises, we used OpenMM-ML to combine classical molecular mechanics force field with an ML potential. This hybrid approach allows us to apply computationally expensive ML potentials only where they are most useful.
+
+In this exercise we will  use different approach. Instead of dividing the system into ML and MM regions, we will evaluate the entire system using a single ML potential.
+
+This approach removes the need to define an ML region and an MM region. However, it also means that the ML potential must describe all relevant interactions in the system, including those involving solvent molecules.
+
+## 1. From an AMBER structure to an ML simulation
+
+We will start with a molecular system prepared and equilibrated  using the familiar AMBER workflow. Before running the simulation, the structure must be converted into the format expected by SO3LR and JAX-MD.
+
+The preparation involves several steps:
+
+- Read atomic coordinates, elements, and periodic box information from the AMBER topology and  restart.
+- Remove virtual sites (if any are present, for example if you used OPC water model), since SO3LR expects real atoms.
+- Convert coordinates and box information into the representation required by JAX-MD.
+- Set up the SO3LR potential and its neighbor lists.
+
+Unlike the previous exercises, we do not assign different force fields to different parts of the system. All real atoms are evaluated by SO3LR.
+
+## 2. How SO3LR works with JAX-MD
+
+SO3LR does not use OpenMM as its molecular dynamics engine. Instead, it relies on three components:
+
+- SO3LR - the ML potential
+- JAX - a Python framework for numerical computing.  It supports automatic differentiation and compilation of numerical operations for efficient execution on GPUs and CPUs.One particularly important feature is JIT (just-in-time) compilation. JAX can compile computational operations into optimized code for the target hardware. 
+- JAX-MD -  molecular dynamics engine, provides the algorithms needed to perform molecular dynamics, including integration and temperature and pressure control.
+
+The relationship is straightforward:
+
+- SO3LR calculates energies and forces.
+- JAX provides the computational framework and acceleration.
+- JAX-MD uses the forces to propagate the system through time.
+
+
+### A note about JAX compilation
+
+One important difference from our previous OpenMM simulations is JAX's use of JIT compilation. Before executing the simulation efficiently, JAX optimizes and compiles the computational operations. This introduces additional overhead during the first execution.
+
+Consequently:
+
+- The first execution can be noticeably slower.
+- Subsequent execution can be much faster because compiled operations are reused.
+- When benchmarking performance, compilation time should be distinguished from actual MD execution time.
+
+This is particularly important when running short simulations, where compilation overhead can represent a substantial fraction of the total runtime.
+
+## 3. Running molecular dynamics
+
+Once the system has been prepared and the SO3LR potential initialized, we can run molecular dynamics.
+
+The simulation uses familiar MD parameters:
+
+- **Timestep:** the integration time step.
+- **Number of steps:** how long the simulation runs.
+- **Temperature:** the target simulation temperature.
+- **Pressure:** the target pressure.
+- **Ensemble:** the statistical ensemble used for the simulation.
+
+For this exercise, we use an NPT ensemble. Temperature and pressure are controlled using a Nose–Hoover thermostat and barostat.
+
+
+### Minimization before MD
+
+An additional practical consideration is the initial structure. An AMBER-prepared structure is not necessarily an ideal starting configuration for an ML potential. The initial geometry may be inconsistent with the potential's preferred equilibrium geometry, particularly for solvent molecules.
+
+For example,  a system containing TIP3P water can become unstable when SO3LR MD is started directly from the AMBER restart, while an OPC water system can run without this additional preparation. For this reason, we provide an alternative script that performs a short energy minimization before starting MD. The minimization is intended to relax unfavorable initial configurations and reduce the risk of instability at the beginning of the simulation.
+
+
+## 4. Practical work
+
+We provide several scripts to explore the SO3LR/JAX-MD workflow.
+
+### 1. Run MD from an AMBER restart
+
+Start with the AMBER restart file and run a short molecular dynamics simulation using SO3LR.
+
+Your task:
+
+1. Inspect the input script and identify the main simulation parameters.
+2. Identify where the SO3LR potential is initialized.
+3. Locate the thermostat, barostat, and integration settings.
+4. Submit the simulation.
+5. Examine the resulting HDF5 trajectory.
+
+Pay attention to the initial execution time, which includes JAX compilation overhead.
+
+### 2. Run minimization followed by MD
+
+Repeat the simulation using the alternative input script, which performs a short minimization before starting MD.
+
+Compare the behavior with the previous run.
+
+Consider:
+
+- Does the simulation start more smoothly?
+- Are there differences in the initial energy and forces?
+- Why might minimization be particularly important when transferring a structure between different potentials?
+
+### 3. Restart an existing simulation
+
+MD simulations are often much longer than a single job allocation allows. Therefore, the ability to restart a simulation is essential.
+
+We provide a script that reads an existing SO3LR HDF5 trajectory and continues the simulation from its last saved configuration.
+
+Your task:
+
+1. Inspect how the last configuration is retrieved.
+2. Restart the simulation.
+3. Verify that the new trajectory continues from the previous configuration.
+
+### 4. Convert the trajectory for analysis
+
+SO3LR writes simulation trajectories in HDF5 format.
+
+For compatibility with familiar molecular visualization and analysis tools, we also provide a script to convert the HDF5 trajectory into AMBER NetCDF format.
+
+Your task:
+
+1. Convert the HDF5 trajectory to AMBER NetCDF.
+2. Load the trajectory into a molecular visualization program.
+3. Examine the resulting molecular motion.
+
+This step illustrates that although the simulation engine and trajectory format differ from our previous OpenMM exercises, we can still use familiar tools for downstream analysis.
+
+---
+
+## Key takeaways
+
+In this exercise, we moved from hybrid ML/MM simulations to full-system ML molecular dynamics.
+
+The main differences are:
+
+- Instead of applying an ML potential to only a selected region, SO3LR describes the entire system.
+- AMBER provides the initial structure, but its force field is not used during the simulation.
+- SO3LR supplies the energy and forces, while JAX and JAX-MD provide the computational framework and MD algorithms.
+- JAX JIT compilation introduces an initial overhead that should be considered when measuring performance.
+- Initial structure preparation and minimization can be important when switching between different potentials.
+
+**The broader idea:** ML potentials are not limited to replacing the force field for a small region of a molecular system. With suitable models and computational approaches, they can also be used to drive molecular dynamics for an entire system.
+
+
+
+
+
+
+
+
+# Exercise 4 — Scaling Up with SO3LR: Full-System ML Molecular Dynamics with JAX-MD
+
+Move beyond ML/MM simulations, where only a selected region is treated with an ML potential, to simulations in which the entire system is described by SO3LR. Use JAX-MD to run and explore large-scale ML-driven molecular dynamics.
+
+
+## Goal
+Understand what changes when we move from ML/MM simulations to full-system ML molecular dynamics, and see how SO3LR can be used to simulate a much larger system.
+
+Start with an AMBER-prepared system, but unlike the previous exercises, you are no longer assigning an ML potential only to a peptide while keeping the solvent under MM.
+
+#### Intro
+
+So3LR uses JAX-based MD engine jax-md. Currently there is no intergation with openmm. Simulation input script is quite complex: 
+There is quite a lot going on under the hood: JAX compilation, neighbor lists, fractional coordinates, Nose–Hoover thermostat and barostat, energy minimization, trajectory buffering, and HDF5 output. However you don't need to understand every implementation detail to transition to so3lr.
+
+#### 1. From AMBER structure to an ML simulation
+Yyou start with an AMBER-prepared system, but unlike the previous exercises, you are no longer assigning an ML potential only to a peptide while keeping the solvent under MM.
+
+With SO3LR, the entire system is evaluated using the ML potential.
+
+- The input structure contains atomic coordinates, elements, and periodic box information.
+- Virtual sites are removed because SO3LR expects real atoms.
+- The system is converted into the format required by JAX-MD.
+
+#### 2. How SO3LR is connected to JAX-MD
+
+- SO3LR	Provides the ML potential: energy and forces
+- JAX	Provides accelerated numerical computation and compilation
+- JAX-MD	Provides molecular dynamics algorithms and integration
+
+So SO3LR supplies the energy and forces, while JAX-MD uses them to propagate the system through time.
+
+Neighbor lists  help avoid calculating interactions between every possible pair of atoms. SO3LR uses separate short-range and long-range neighbor lists. 
+
+#### 3. Running molecular dynamics
+Molecular dynamic is run as in classical MM with usual parameters:
+- Timestep
+- Number of MD steps
+- Target temperature
+- Target pressure
+- Simulation ensemble (NPT)
+
+The Nose–Hoover thermostat and barostat used for controlling temperature and pressure.
+
+
+JAX concept: One important comcept is JIT compilation: JAX compiles the simulation operations for efficient execution on the GPU. The first execution includes compilation overhead, so it can be noticeably slower than subsequent execution.
+
+I have several jax-md scripts:
+- run md using amber restart
+- run md using amber restart, 5 steps minimization before MD (system with tip3p wate blows up without minimizatio, opc water restart works without minimization)
+- restart simulation from hdf5
+- convert hdf5 traj to amber netcdf
