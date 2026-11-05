@@ -27,6 +27,7 @@ import h5py
 # ---------------------------------------------------------------------------
 prmtop='system.parm7'
 restrt='system.rst7'
+energy_file = 'energies.dat'
 
 unit = units.metal_unit_system() # jax_md uses metal system: eV, A, ps, K
 
@@ -318,12 +319,17 @@ total_time = time.time()
 velocities, positions, boxes = [], [], []
 
 header = (
-    "{:>6}{:>12}{:>12}{:>12}{:>10}{:>12}{:>10}{:>10}{:>10}"
+    "{:>4}{:>12}{:>12}{:>12}{:>10}{:>12}{:>10}{:>10}{:>10}"
 ).format(
     "Step", "KE [eV]", "PE [eV]", "Tot [eV]",
-    "T [K]", "P [bar]", "L [Å]", "rho", "s/step"
+    "T [K]", "P [bar]", "L [A]", "rho", "s/step"
 )
-print(f"\nRunning dynamics..\n\n{header}\n{'-' * len(header)}")
+
+pathlib.Path(energy_file).expanduser().resolve().parent.mkdir(exist_ok=True)
+efile = open(energy_file, 'w')
+efile.write('# ' + header + '\n')   # '#' so np.loadtxt skips it
+efile.flush()
+print(f"\nRunning dynamics, writing energies to {energy_file}\n")
 
 for i in range(npt_cycles):
 
@@ -419,20 +425,22 @@ for i in range(npt_cycles):
     L = float(box[0]) 
     rho = float(masses.sum()) * 1.66054 / L**3
 
-    print(
+    efile.write(
         f"{(i+1)*npt_steps:6d}"
-        f"{KE:12.2f}"
-        f"{PE:12.2f}"
-        f"{KE+PE:12.3f}"
-        f"{T:10.1f}"
-        f"{P:12.1f}"
-        f"{L:10.3f}"
+        f"{float(KE):12.4f}"
+        f"{float(PE):12.4f}"
+        f"{float(KE+PE):12.4f}"
+        f"{float(T):10.2f}"
+        f"{float(P):12.2f}"
+        f"{L:10.4f}"
         f"{rho:10.4f}"
-        f"{(new_time - old_time) / npt_steps:10.4f}"
+        f"{(new_time - old_time) / npt_steps:10.4f}\n"
     )
+    efile.flush()
 
 wall = time.time() - total_time
 print('Total_time: ', wall)
+efile.close()
 
 # ns/day over the whole run (includes JIT compilation, IO and any overflow redos).
 total_steps = npt_cycles * npt_steps
@@ -442,18 +450,3 @@ print(f'Overall (incl. compile, IO, overflows): '
 
 jax.clear_caches()
 
-# ---------------------------------------------------------------------------
-# Postprocess the trajectory
-# ---------------------------------------------------------------------------
-
-file = h5py.File('hdf5/trajectory.hdf5', mode='r')
-
-# Stored shape: (num_flushes, hdf5_buffer_size, num_atoms, 3)
-velocities = np.array(file['velocities'])
-print(velocities.shape)
-
-# Merge the two leading axes into one list of consecutive frames,
-# separated by delta_t = npt_steps * timestep_ps [ps].
-velocities = velocities.reshape(-1, *file['velocities'].shape[-2:])
-
-print(velocities.shape)  # (num_flushes * hdf5_buffer_size, num_atoms, 3)
