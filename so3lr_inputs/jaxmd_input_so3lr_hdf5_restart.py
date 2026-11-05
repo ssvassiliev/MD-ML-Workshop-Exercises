@@ -27,7 +27,7 @@ import h5py
 # ---------------------------------------------------------------------------
 prmtop='system.parm7'
 restrt='system.rst7'
-hdf5_restart = 'minimized.hdf5'
+hdf5_restart = 'hdf5/minimized.hdf5'
 energy_file = 'energies.dat'
 
 unit = units.metal_unit_system() # jax_md uses metal system: eV, A, ps, K
@@ -331,6 +331,13 @@ pathlib.Path(energy_file).expanduser().resolve().parent.mkdir(exist_ok=True)
 efile = open(energy_file, 'w')
 efile.write('# ' + header + '\n')   # '#' so np.loadtxt skips it
 efile.flush()
+
+print(f"\nWarming up..\n")
+# Warmup: same call as in the loop, result discarded, state untouched
+jax.block_until_ready(
+    jax.lax.fori_loop(0, npt_steps, step_npt_fn, (state, nbrs, nbrs_lr, box))
+)
+
 print(f"\nRunning dynamics..\n\n{header}\n{'-' * len(header)}")
 
 for i in range(npt_cycles):

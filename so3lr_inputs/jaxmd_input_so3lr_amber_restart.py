@@ -329,8 +329,14 @@ pathlib.Path(energy_file).expanduser().resolve().parent.mkdir(exist_ok=True)
 efile = open(energy_file, 'w')
 efile.write('# ' + header + '\n')   # '#' so np.loadtxt skips it
 efile.flush()
-print(f"\nRunning dynamics, writing energies to {energy_file}\n")
 
+print(f"\nWarming up..\n")
+# Warmup: same call as in the loop, result discarded, state untouched
+jax.block_until_ready(
+    jax.lax.fori_loop(0, npt_steps, step_npt_fn, (state, nbrs, nbrs_lr, box))
+)
+
+print(f"\nRunning dynamics, writing energies to {energy_file}\n")
 for i in range(npt_cycles):
 
     old_time = time.time()

@@ -23,9 +23,10 @@ from so3lr import So3lrPotential
 # ---------------------------------------------------------------------------
 prmtop = 'system.parm7'
 restrt = 'system.rst7'
+energy_file = 'energies.dat'
 output_file = 'hdf5/minimized.hdf5'
 
-min_cycles = 5        # Maximum number of Python-level cycles
+min_cycles = 20       # Maximum number of Python-level cycles
 min_steps = 10        # FIRE steps per cycle (one compiled fori_loop)
 fmax_tol = None       # Stop early once max |F| [eV/A] falls below this; None = always run min_cycles
 
@@ -125,9 +126,10 @@ def step_fire_fn(i, carry):
 
     return fire_state, nbrs, nbrs_lr
 
-
-print('Cycle\tE [eV]\tFmax [eV/A]')
-print('--------------------------')
+pathlib.Path(energy_file).expanduser().resolve().parent.mkdir(exist_ok=True)
+efile = open(energy_file, 'w')
+efile.write('#Cycle\tE [eV]\tFmax [eV/A]\n')   # '#' so np.loadtxt skips it
+efile.flush()
 
 E, Fmax = None, None
 cycle = 0
@@ -164,13 +166,17 @@ while cycle < min_cycles:
         box=box
     )
     Fmax = float(np.abs(F).max())
+    
+    efile.write(f'{cycle}\t{E:.4f}\t{Fmax:.4f}\n')
+    efile.flush()
 
-    print(f'{cycle}\t{E:.4f}\t{Fmax:.4f}')
     cycle += 1
 
     if fmax_tol is not None and Fmax < fmax_tol:
         print(f'Converged: Fmax < {fmax_tol} eV/A after {cycle} cycles.')
         break
+
+efile.close()
 
 # ---------------------------------------------------------------------------
 # Save minimized structure (HDF5)
