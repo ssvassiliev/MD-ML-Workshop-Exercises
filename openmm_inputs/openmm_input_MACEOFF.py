@@ -14,6 +14,8 @@ from parmed.openmm import RestartReporter
 # AMBER files
 prmtop="system.parm7"
 restart="system.rst7"
+energy_file = 'energies.dat'
+
 # MODEL
 MODELPATH = os.path.expandvars("$SCRATCH/examples_ml-md/models/MACE-OFF24_medium.model")
 
@@ -86,7 +88,7 @@ sim.context.setVelocities(ncrst.velocities)
 # sim.context.setVelocitiesToTemperature(310 * unit.kelvin)
 
 sim.reporters.append(app.StateDataReporter(
-    sys.stdout, 
+    energy_file, 
     1000,
     step = True, 
     potentialEnergy = True, 

@@ -12,6 +12,7 @@ from parmed.openmm import RestartReporter
 # Load AMBER files
 amber_sys = load_file("system.parm7", "system.rst7")
 ncrst=app.amberinpcrdfile.AmberInpcrdFile("system.rst7")
+energy_file = 'energies.dat'
 
 # Simulation parameters
 nsteps = 20000
@@ -66,7 +67,7 @@ sim.context.setVelocities(ncrst.velocities)
 # sim.context.setVelocitiesToTemperature(310 * unit.kelvin)
 
 sim.reporters.append(app.StateDataReporter(
-    sys.stdout, 
+    energy_file, 
     1000,
     step = True, 
     potentialEnergy = True, 

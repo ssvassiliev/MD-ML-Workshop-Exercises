@@ -13,6 +13,8 @@ MODELPATH=os.path.expandvars("$SCRATCH/examples_mlmd/models/fennix-bio1M.fnx")
 # Load AMBER topology and restart
 prmtop="system.parm7"
 restart="system.rst7"
+energy_file = 'energies.dat'
+
 amber_sys = load_file(prmtop, restart)
 ncrst=app.amberinpcrdfile.AmberInpcrdFile(restart)
 
@@ -76,7 +78,7 @@ else:
 
 # Add a reporter to print selected simulation statistics every 200 steps
 sim.reporters.append(app.StateDataReporter(
-    sys.stdout, 
+    energy_file, 
     1000,
     step = True, 
     potentialEnergy = True, 
