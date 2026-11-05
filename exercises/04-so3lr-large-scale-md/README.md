@@ -83,7 +83,7 @@ For this exercise, we use an NPT ensemble. Temperature and pressure are controll
 
 An additional practical consideration is the initial structure. An AMBER-prepared structure is not necessarily an ideal starting configuration for an ML potential. The initial geometry may be inconsistent with the potential's preferred equilibrium geometry, particularly for solvent molecules.
 
-For example,  a system containing TIP3P water can become unstable when SO3LR MD is started directly from the AMBER restart, while an OPC water system can run without this additional preparation. For this reason, we provide an alternative script that performs a short energy minimization before starting MD. The minimization is intended to relax unfavorable initial configurations and reduce the risk of instability at the beginning of the simulation.
+For example,  a system containing TIP3P water can become unstable when SO3LR MD is started directly from the AMBER restart, while an OPC water system can run without this additional preparation. For this reason, we provide a minimization script. The minimization is intended to relax unfavorable initial configurations and reduce the risk of instability at the beginning of the simulation.
 
 
 ## 4. Practical work
