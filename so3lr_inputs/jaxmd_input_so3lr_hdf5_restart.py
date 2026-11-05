@@ -451,19 +451,3 @@ print(f'Overall (incl. compile, IO, overflows): '
       f'{ns_total / wall * 86400:.3f} ns/day')
 
 jax.clear_caches()
-
-# ---------------------------------------------------------------------------
-# Postprocess the trajectory
-# ---------------------------------------------------------------------------
-
-file = h5py.File('hdf5/trajectory.hdf5', mode='r')
-
-# Stored shape: (num_flushes, hdf5_buffer_size, num_atoms, 3)
-velocities = np.array(file['velocities'])
-print(velocities.shape)
-
-# Merge the two leading axes into one list of consecutive frames,
-# separated by delta_t = npt_steps * timestep_ps [ps].
-velocities = velocities.reshape(-1, *file['velocities'].shape[-2:])
-
-print(velocities.shape)  # (num_flushes * hdf5_buffer_size, num_atoms, 3)
