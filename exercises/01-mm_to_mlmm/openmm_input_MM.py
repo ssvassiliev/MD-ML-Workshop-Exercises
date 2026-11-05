@@ -40,7 +40,7 @@ system = amber_sys.createSystem (
 #
 # ------------------------------------------------------------------
 
-# ---------- FIXME 2: Initialize the ANI-2x ML potential -----------
+# ----- FIXME 2: Initialize the ANI-2x ML potential ----------------
 # Create an MLPotential object using the model name 'ani2x'.
 #
 # Uncomment the following line and replace ???:
@@ -49,7 +49,7 @@ system = amber_sys.createSystem (
 #
 # ------------------------------------------------------------------
 
-# ---------- FIXME 3: Create the hybrid ML/MM system --------------
+# ----- FIXME 3: Create the hybrid ML/MM system --------------------
 # Use potential.createMixedSystem() to create a hybrid ML/MM system.
 #
 # The function call should:
