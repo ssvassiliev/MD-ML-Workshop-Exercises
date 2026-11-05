@@ -25,9 +25,10 @@ import h5py
 # ---------------------------------------------------------------------------
 # Simulation parameters
 # ---------------------------------------------------------------------------
-prmtop='polyAla_4.prmtop'
-restrt='polyAla_4-relaxed2.rst7'
-hdf5_restart = 'polyAla_4.hdf5'
+prmtop='system.parm7'
+restrt='system.rst7'
+hdf5_restart = 'minimized.hdf5'
+energy_file = 'energies.dat'
 
 unit = units.metal_unit_system() # jax_md uses metal system: eV, A, ps, K
 
@@ -187,8 +188,12 @@ state = init_fn(
 )
 
 # Optionally replace momenta by the restart velocities. 
-if V is not None:
-    state = state.set(momentum=jnp.array(atoms.get_momenta()))
+if V is not None and np.any(V != 0.0):
+    state = state.set(momentum=masses[:, None] * jnp.array(V))   # p = m * v, V in A/ps
+    print("Using velocities from file.")
+else:
+    print("Velocities are zero or missing, keeping Maxwell-Boltzmann momenta from init_fn.")
+
 # Check the initial temperature
 T0 = jax_md.quantity.temperature(momentum=state.momentum, mass=state.mass) / unit['temperature']
 print("Measured T after initialization [K]:", T0)
@@ -316,11 +321,16 @@ total_time = time.time()
 velocities, positions, boxes = [], [], []
 
 header = (
-    "{:>6}{:>12}{:>12}{:>12}{:>10}{:>12}{:>10}{:>10}{:>10}"
+    "{:>4}{:>12}{:>12}{:>12}{:>10}{:>12}{:>10}{:>10}{:>10}"
 ).format(
     "Step", "KE [eV]", "PE [eV]", "Tot [eV]",
-    "T [K]", "P [bar]", "L [Å]", "rho", "s/step"
+    "T [K]", "P [bar]", "L [A]", "rho", "s/step"
 )
+
+pathlib.Path(energy_file).expanduser().resolve().parent.mkdir(exist_ok=True)
+efile = open(energy_file, 'w')
+efile.write('# ' + header + '\n')   # '#' so np.loadtxt skips it
+efile.flush()
 print(f"\nRunning dynamics..\n\n{header}\n{'-' * len(header)}")
 
 for i in range(npt_cycles):
@@ -417,20 +427,22 @@ for i in range(npt_cycles):
     L = float(box[0]) 
     rho = float(masses.sum()) * 1.66054 / L**3
 
-    print(
+    efile.write(
         f"{(i+1)*npt_steps:6d}"
-        f"{KE:12.2f}"
-        f"{PE:12.2f}"
-        f"{KE+PE:12.3f}"
-        f"{T:10.1f}"
-        f"{P:12.1f}"
-        f"{L:10.3f}"
+        f"{float(KE):12.4f}"
+        f"{float(PE):12.4f}"
+        f"{float(KE+PE):12.4f}"
+        f"{float(T):10.2f}"
+        f"{float(P):12.2f}"
+        f"{L:10.4f}"
         f"{rho:10.4f}"
-        f"{(new_time - old_time) / npt_steps:10.4f}"
+        f"{(new_time - old_time) / npt_steps:10.4f}\n"
     )
+    efile.flush()
 
 wall = time.time() - total_time
 print('Total_time: ', wall)
+efile.close()
 
 # ns/day over the whole run (includes JIT compilation, IO and any overflow redos).
 total_steps = npt_cycles * npt_steps
