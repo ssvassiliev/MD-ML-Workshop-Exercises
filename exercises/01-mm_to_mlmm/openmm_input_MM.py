@@ -25,27 +25,47 @@ system = amber_sys.createSystem (
     removeCMMotion = True
 )
 
-# FIX ME 1: Select atoms belonging to the ML region
-# 1. Create an empty list: ml_atoms = []
+# ----- FIXME 1: Identify atoms belonging to the ML region -------
+# 1. Initialize an empty list: ml_atoms = []
 # 2. Loop over atoms in amber_sys.topology.atoms()
-# 3. Check whether each atom's residue name is "ACE", "ALA", or "NME"
-# 4. If it is, append the atom's index (atom.index) to ml_atoms
+# 3. Select atoms whose residue name is ACE, ALA, or NME
+# 4. Append their atom indices to ml_atoms
+#
+# Uncomment the following 4 lines and replace the ??? placeholders:
+#
+# ml_atoms = []
 # for atom in ???:
 #     if atom.residue.name in ( ??? ):
 #         ml_atoms.append( ??? )
+#
+# ------------------------------------------------------------------
 
-# FIX ME 2: Initialize the ANI-2x ML potential
-# Create an MLPotential object using the model name 'ani2x'
+# ---------- FIXME 2: Initialize the ANI-2x ML potential -----------
+# Create an MLPotential object using the model name 'ani2x'.
+#
+# Uncomment the following line and replace ???:
+#
 # potential = ???
+#
+# ------------------------------------------------------------------
 
-# FIX ME 3: Create a hybrid ML/MM system using the ani2x potential
-# Use potential.createMixedSystem() with:
-# - The AMBER topology (amber_sys.topology)
-# - The existing MM system (system)
-# - The list of ML atom indices (ml_atoms)
-# - removeConstraints=False
-# Assign the returned hybrid system to system
+# ---------- FIXME 3: Create the hybrid ML/MM system --------------
+# Use potential.createMixedSystem() to create a hybrid ML/MM system.
+#
+# The function call should:
+#   - Call createMixedSystem() on the ANI-2x potential object
+#   - Pass the AMBER topology (amber_sys.topology)
+#   - Pass the existing MM system (system)
+#   - Pass the ML atom indices (ml_atoms)
+#   - Set removeConstraints=False
+#
+# Uncomment the following line and write the complete function call,
+# including the method name and all required arguments:
+#
 # system = ???
+#
+# -------------------------------------------------------------------
+
 
 # OpenMM-ML uses the existing MM system as its starting point and replaces 
 # the appropriate force contributions for the selected atoms.
