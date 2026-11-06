@@ -62,15 +62,20 @@ properties = dict(
 # Create the simulation
 sim = app.Simulation(amber_sys.topology, system, integrator, platform, properties)
 
-# initialize simulation state from the Amber restart,
+# Initialize the simulation state using coordinates from the AMBER restart file.
 sim.context.setPositions(amber_sys.positions)
+
+# Restore periodic box dimensions if available (required for periodic simulations).
 if ncrst.boxVectors is not None:
     sim.context.setPeriodicBoxVectors(*ncrst.boxVectors)
+
+# Restore velocities from the AMBER restart file if available.
+# Otherwise, generate new velocities from the target temperature.
 if ncrst.velocities is not None:
     sim.context.setVelocities(ncrst.velocities)
 else:
     sim.context.setVelocitiesToTemperature(temperature)
-
+ 
 # Add a reporter to print selected simulation statistics every 1000 steps
 sim.reporters.append(app.StateDataReporter(
     energy_file, 

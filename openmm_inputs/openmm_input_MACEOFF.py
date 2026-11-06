@@ -99,8 +99,11 @@ sim.reporters.append(app.StateDataReporter(
     )
 )
 
-sim.reporters.append(app.DCDReporter("trajectory.dcd", 50000))
-sim.reporters.append(RestartReporter("restart.nc", 50000, netcdf = True))
+# Add a reporter to save the trajectory 
+# sim.reporters.append(app.DCDReporter("trajectory.dcd", 1000))
+
+# Add a reporter to save the restart
+# sim.reporters.append(RestartReporter("restart.nc", 10000, netcdf=True))
 
 print("\nRunning dynamics...")
 start = time.time()

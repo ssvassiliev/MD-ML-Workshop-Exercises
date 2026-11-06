@@ -1,15 +1,10 @@
-# Model: wget https://storage.googleapis.com/aimnetcentral/aimnet2v2/AIMNet2/aimnet2_wb97m_d3_0.pt
-# Create ~/.cache/aimnet and make a link to it:
-# mkdir $HOME/.cache/aimnet
-# ln -s $(pwd)/aimnet/aimnet2_wb97m_d3_0.pt ~/.cache/aimnet/aimnet2_wb97m_d3_0.pt 
-
 import os, sys, time
 from openmm import app, unit, Platform, LangevinMiddleIntegrator, MonteCarloBarostat
 from openmmml import MLPotential
 from parmed import load_file
 from parmed.openmm import RestartReporter
 
-# Load AMBER files
+# Load AMBER topology and restart
 amber_sys = load_file("system.parm7", "system.rst7")
 ncrst=app.amberinpcrdfile.AmberInpcrdFile("system.rst7")
 energy_file = 'energies.dat'
@@ -20,7 +15,9 @@ timestep = 1.0 * unit.femtoseconds
 temperature = 310 * unit.kelvin
 pressure = 1 * unit.atmosphere
 
-# Create base MM system
+# Create the base MM system
+# This establishes the original force field for the entire system, including 
+# bonded terms, nonbonded interactions, constraints, and PME settings.
 system = amber_sys.createSystem (
     nonbondedMethod = app.PME,
     ewaldErrorTolerance = 0.0004,
@@ -29,14 +26,27 @@ system = amber_sys.createSystem (
     removeCMMotion = True
 )
 
-# Identify ML atoms
+# Select atoms for the ML region
 ml_atoms = [ ]
 for atom in amber_sys.topology.atoms():
     if atom.residue.name in ("ACE", "ALA", "NME"):
         ml_atoms.append(atom.index)
 
-# Create mixed system
+# Create a hybrid ML/MM system using the ani2x potential
+# OpenMM-ML uses the existing MM system as its starting point and replaces 
+# the appropriate force contributions for the selected atoms.
 potential = MLPotential('aimnet2')
+
+# Optional: Pre-download AIMNet2 model weights for offline use.
+# Download the model weights 
+# wget https://storage.googleapis.com/aimnetcentral/aimnet2v2/AIMNet2/aimnet2_wb97m_d3_0.pt
+#
+# Create the AIMNet cache directory
+# mkdir -p $HOME/.cache/aimnet
+#
+# Link the downloaded model weights into the cache
+#ln -s $(pwd)/aimnet2_wb97m_d3_0.pt \
+#    $HOME/.cache/aimnet/aimnet2_wb97m_d3_0.pt
 
 system = potential.createMixedSystem(
     amber_sys.topology,
@@ -45,11 +55,12 @@ system = potential.createMixedSystem(
     removeConstraints=False
 )
 
+# Configure the Langevin integrator and barostat
 integrator = LangevinMiddleIntegrator(temperature, 1.0 / unit.picoseconds, timestep)
 barostat = MonteCarloBarostat(pressure, temperature, 50)
 system.addForce(barostat)
 
-
+# Select the GPU implementation
 platform = Platform.getPlatformByName("CUDA")
 print("Platform:", platform.getName())
 properties = dict(
@@ -59,13 +70,24 @@ properties = dict(
     DeviceIndex = os.environ["CUDA_VISIBLE_DEVICES"],
 )
 
+# Create the simulation
 sim = app.Simulation(amber_sys.topology, system, integrator, platform, properties)
+
+# Initialize the simulation state using coordinates from the AMBER restart file.
 sim.context.setPositions(amber_sys.positions)
-sim.context.setVelocities(ncrst.velocities)
 
-# Initialize velocities from a Maxwell–Boltzmann distribution at 310 K
-# sim.context.setVelocitiesToTemperature(310 * unit.kelvin)
+# Restore periodic box dimensions if available (required for periodic simulations).
+if ncrst.boxVectors is not None:
+    sim.context.setPeriodicBoxVectors(*ncrst.boxVectors)
 
+# Restore velocities from the AMBER restart file if available.
+# Otherwise, generate new velocities from the target temperature.
+if ncrst.velocities is not None:
+    sim.context.setVelocities(ncrst.velocities)
+else:
+    sim.context.setVelocitiesToTemperature(temperature)
+    
+# Add a reporter to print selected simulation statistics every 1000 steps
 sim.reporters.append(app.StateDataReporter(
     energy_file, 
     1000,
@@ -78,8 +100,11 @@ sim.reporters.append(app.StateDataReporter(
     )
 )
 
-sim.reporters.append(app.DCDReporter("trajectory.dcd", 50000))
-sim.reporters.append(RestartReporter("restart.nc", 50000, netcdf = True))
+# Add a reporter to save the trajectory 
+# sim.reporters.append(app.DCDReporter("trajectory.dcd", 1000))
+
+# Add a reporter to save the restart
+# sim.reporters.append(RestartReporter("restart.nc", 10000, netcdf=True))
 
 print("\nRunning dynamics...")
 start = time.time()
@@ -89,7 +114,7 @@ sim.step(nsteps)
 elapsed = time.time() - start
 print(f"Elapsed: {elapsed:.2f} sec")
 
-# Benchmark time
+# Calculate simulation performance
 simulated_ns = (nsteps * timestep).value_in_unit(unit.nanoseconds)
 ns_per_day = simulated_ns / (elapsed / 86400)
 

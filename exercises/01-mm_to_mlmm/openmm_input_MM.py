@@ -7,6 +7,7 @@ from parmed.openmm import RestartReporter
 # Load AMBER topology and restart
 amber_sys = load_file("system.parm7", "system.rst7")
 ncrst=app.amberinpcrdfile.AmberInpcrdFile("system.rst7")
+energy_file="energies.dat"
 
 # Simulation parameters
 nsteps = 20000
@@ -99,7 +100,7 @@ else:
 
 # Add a reporter to print selected simulation statistics every 1000 steps
 sim.reporters.append(app.StateDataReporter(
-    sys.stdout, 
+    energy_file, 
     1000,
     step = True, 
     potentialEnergy = True, 
