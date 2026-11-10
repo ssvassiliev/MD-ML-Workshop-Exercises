@@ -199,18 +199,5 @@ Important: Throughput measurements can show that performance changes, but not ne
 
 Choosing a GPU allocation means balancing **simulation speed** against **resource efficiency**. A larger GPU may finish a simulation sooner but use substantially more resources per nanosecond. Splitting a GPU with MIG also lets several independent simulations run side by side, which is one reason efficiency matters on a shared cluster.
 
-The best choice depends on whether turnaround time or efficient use of shared computing resources is the priority.------------
-
-
-
-
-
-sbatch --gpus=nvidia_h100_80gb_hbm3_1g.10gb:1 submit_FENNIX.sh
-sbatch --gpus=nvidia_h100_80gb_hbm3_2g.20gb:1 submit_FENNIX.sh
-sbatch --gpus=nvidia_h100_80gb_hbm3_3g.40gb:1 submit_FENNIX.sh
-sbatch --gpus=h100:1 submit_FENNIX.sh
-sbatch --gpus=nvidia_h100_80gb_hbm3_1g.10gb:1 submit_ORB-OMOL.sh
-sbatch --gpus=nvidia_h100_80gb_hbm3_2g.20gb:1 submit_ORB-OMOL.sh
-sbatch --gpus=nvidia_h100_80gb_hbm3_3g.40gb:1 submit_ORB-OMOL.sh
-sbatch --gpus=h100:1 submit_ORB-OMOL.sh
+The best choice depends on whether turnaround time or efficient use of shared computing resources is the priority.
 
