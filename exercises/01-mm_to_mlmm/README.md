@@ -34,6 +34,12 @@ Keep this in mind when interpreting the results: the peptide is described by a m
 - Identify where the force field is loaded and the OpenMM system is created.
 - Run a short MM-only simulation using submission script `submit_MM.sh`.
 
+Note about GPU allocation: The submit_MM.sh template requests a 1g MIG GPU instance, which is the standard allocation on the real cluster. If you are running on the workshop training cluster, you can override this request to use one full GPU by submitting the job with:    
+```bash
+sbatch --gpus=1 submit_MM.sh
+```
+Apply this override to all exercises. The submission scripts will retain the standard 1g MIG request for the production cluster.
+
 ### 2. Introduce the ML potential
 - Create `openmm_input_ANI2X.py` and `submit_ANI2X.sh` by adapting the `openmm_input_MM.py` and `submit_MM.sh` templates.
 - Load the ANI-2x potential using OpenMM-ML.
