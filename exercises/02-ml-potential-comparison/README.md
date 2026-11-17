@@ -63,15 +63,17 @@ Rather than editing the Python scripts or copying input files for every system, 
 For example, to use `polyAla16`:
 
 ```bash
-ln -sf ../amber_systems/polyala16/system.parm7 system.parm7
-ln -sf ../amber_systems/polyala16/system.rst7 system.rst7
+cd exercises/02-ml-potential-comparison
+ln -sf ../../amber_systems/polyAla_16/polyAla_16.parm7 system.parm7
+ln -sf ../../amber_systems/polyAla_16/polyAla_16.rst7 system.rst7
 ```
 
 To switch to another system, simply update the links:
 
 ```bash
-ln -sf ../amber_systems/polyala64/system.parm7 system.parm7
-ln -sf ../amber_systems/polyala64/system.rst7 system.rst7
+cd exercises/02-ml-potential-comparison
+ln -sf ../../amber_systems/polyala64/polyAla_64.parm7  system.parm7
+ln -sf ../../amber_systems/polyala64/polyAla_64.rst7  system.rst7
 ```
 
 The Python input files do not need to be changed.
