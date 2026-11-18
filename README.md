@@ -5,7 +5,19 @@ The exercises introduce ML/MM simulations, explore different ML potentials, and 
 
 ## Setup
 - Clone the repo
-- Download simulation systems
+- Setup containers  
+
+On training cluster
+```bash
+cd $SCRATCH
+ln -sf /project/def-sponsor00/containers/
+```
+  
+On nibi:  
+```bash
+cd $SCRATCH
+ln -sf /scratch/svassili/containers/
+```
 
 ### Exercise 1. From MM to ML/MM with ANI-2x.
 Modify the openmm input script to replace the force-field treatment of the polyalanine peptide with ANI-2x, while retaining the conventional MM treatment of the surrounding water molecules.
